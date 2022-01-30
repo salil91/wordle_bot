@@ -1,9 +1,8 @@
-# Bot to solve wordle
-# Currently coding the game
+# wordle.py - The game
 
 # Usage: python wordle.py <game mode> <answer>
 # Game modes: easy (default) / hard
-# If no answer is provided, a random word is chosen.
+# If no answer is provided, a random 5-letter word is chosen.
 
 # Output: key:
 # Guess # : guess | symbolic result | alphabet result
