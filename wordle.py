@@ -12,9 +12,8 @@
 # 1 : letter in the word, and in the correct spot (shown as upper case letter)
 
 import random
+import re
 import sys
-
-import pyinputplus as pyip
 
 
 def get_word_list():
@@ -32,20 +31,26 @@ def get_guess(game_mode, num_guess, five_letter_words, must_use, locked):
 
     satisfied = False
     while not satisfied:
-        guess = pyip.inputChoice(
-            prompt=f"\nEnter Guess {num_guess}: ",
-            allowRegexes=[locked],
-            choices=["cheat", "codes"],
-        ).lower()
+        guess = input(f"\nEnter Guess {num_guess}: ").lower()
+        satisfied = True
+
         if guess not in five_letter_words:
             print("Guess must be in word list. Try again.")
             satisfied = False
-        else:
-            satisfied = True
+
+        if not re.match(locked, guess):
+            print(
+                "HARD MODE: Any revealed hints must be used in subsequent guesses. Try again."
+            )
+            print(f"HARD MODE: Guess must match the RegEx: {locked}")
+            satisfied = False
 
         for letter in must_use:
             if letter not in guess:
-                print(f'HARD MODE: Guess must include "{letter}". Try again.')
+                print(
+                    "HARD MODE: Any revealed hints must be used in subsequent guesses. Try again."
+                )
+                print(f'HARD MODE: Guess must include "{letter}".')
                 satisfied = False
 
     return guess
