@@ -4,8 +4,8 @@
 # Game modes: easy (default) / hard
 # If no answer is provided, a random 5-letter word is chosen.
 
-# Output: key:
-# Guess # : guess | symbolic result | alphabet result
+# Output key:
+# Turn : guess | symbolic result | alphabet result
 # - : letter not in word in any spot
 # 0 : letter in word, but in the wrong spot (shown as lower case letter)
 # 1 : letter in the word, and in the correct spot (shown as upper case letter)
@@ -104,7 +104,7 @@ def main():
 
     if len(sys.argv) < 3:
         answer = random.choice(five_letter_words)
-        print(f"Random answer: {answer}")
+        # print(f"Random answer: {answer}")
     else:
         answer = sys.argv[2].lower()
         if len(answer) != 5:
