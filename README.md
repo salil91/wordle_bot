@@ -7,3 +7,6 @@ Play Worlde:
 python wordle.py <answer (optional>
 ````
 If no answer is provided, a random 5-letter word is chosen.
+
+## TODO
+Create solver bot
