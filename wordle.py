@@ -1,17 +1,20 @@
 # Bot to solve wordle
 # Currently coding the game
 
-# Usage: python wordle.py <answer>
+# Usage: python wordle.py <game mode> <answer>
+# Game modes: easy (default) / hard
 # If no answer is provided, a random word is chosen.
 
 # Output: key:
 # Guess # : guess | symbolic result | alphabet result
-# _ : letter not in word in any spot
-# - : letter in word, but in the wrong spot (shown as lower case letter)
-# o : letter in the word, and in the correct spot (shown as upper case letter)
+# - : letter not in word in any spot
+# 0 : letter in word, but in the wrong spot (shown as lower case letter)
+# 1 : letter in the word, and in the correct spot (shown as upper case letter)
 
 import random
 import sys
+
+import pyinputplus as pyip
 
 
 def get_word_list():
@@ -23,47 +26,83 @@ def get_word_list():
         return five_letter_words
 
 
-def get_guess(num_guess, five_letter_words):
-    # Get guess and ensure it is 5 words long and exists in the word list.
-    while True:
-        guess = input(f"Enter Guess {num_guess}: ").lower()
-        if len(guess) != 5:
-            print("Guess must be a 5 letter word.")
-        elif guess not in five_letter_words:
-            print("Guess must be in word list.")
+def get_guess(game_mode, num_guess, five_letter_words, must_use, locked):
+    if game_mode == "EASY":
+        locked = r"^[A-Za-z]{5}$"  # Any 5-letter word
+
+    satisfied = False
+    while not satisfied:
+        guess = pyip.inputChoice(
+            prompt=f"\nEnter Guess {num_guess}: ",
+            allowRegexes=[locked],
+            choices=["cheat", "codes"],
+        ).lower()
+        if guess not in five_letter_words:
+            print("Guess must be in word list. Try again.")
+            satisfied = False
         else:
-            break
+            satisfied = True
+
+        for letter in must_use:
+            if letter not in guess:
+                print(f'HARD MODE: Guess must include "{letter}". Try again.')
+                satisfied = False
 
     return guess
 
 
-def check_guess(guess, answer, absent_letters):
-    key, revealed = [], []
+def check_guess(game_mode, guess, answer, absent_letters, must_use):
+    key, revealed, locked = [], [], []
+    remaining = list(answer)
     for spot, letter in enumerate(guess):
         if letter == answer[spot]:
-            key.append("o")
+            key.append("1")
             revealed.append(letter.upper())
-        elif letter in answer:
-            key.append("-")
-            revealed.append(letter.lower())
+            remaining[spot] = ""
+            if game_mode == "HARD":
+                must_use.add(letter)
+                locked.append(letter)
+        elif letter in remaining:
+            key.append("0")
+            revealed.append(letter)
+            if game_mode == "HARD":
+                must_use.add(letter)
+                locked.append(".")
         else:
-            key.append("_")
-            revealed.append("_")
+            key.append("-")
+            revealed.append("-")
             absent_letters.append(letter)
+            if game_mode == "HARD":
+                locked.append(".")
 
     key_string = "".join(key)
     revealed_string = "".join(revealed)
+    locked_string = "".join(locked)
 
-    return key_string, revealed_string, absent_letters
+    return key_string, revealed_string, absent_letters, must_use, locked_string
 
 
 def main():
-    five_letter_words = get_word_list()
     if len(sys.argv) < 2:
+        game_mode = "EASY"
+        prefix_game_mode = "Default "
+    else:
+        game_mode = sys.argv[1].upper()
+        prefix_game_mode = ""
+
+    if game_mode.upper() not in ["EASY", "HARD"]:
+        print("\nUnknown game mode provided. EASY mode selected.")
+        game_mode = "EASY"
+    else:
+        print(f"\n{prefix_game_mode}Game mode: {game_mode.upper()}")
+
+    five_letter_words = get_word_list()
+
+    if len(sys.argv) < 3:
         answer = random.choice(five_letter_words)
         print(f"Random answer: {answer}")
     else:
-        answer = sys.argv[1].lower()
+        answer = sys.argv[2].lower()
         if len(answer) != 5:
             raise Exception("Answer must be a 5 letter word.")
         if answer not in five_letter_words:
@@ -71,11 +110,20 @@ def main():
         else:
             print(f"Given answer: {answer}")
 
-    guesses, keys, results, eliminated_letters = [], [], [], []
+    guesses, keys, results, eliminated_letters, must_use, locked = (
+        [],
+        [],
+        [],
+        [],
+        set(),
+        "",
+    )
     for num_guess in range(1, 7):
-        guess = get_guess(num_guess, five_letter_words)
+        guess = get_guess(game_mode, num_guess, five_letter_words, must_use, locked)
         guesses.append(guess)
-        key, result, eliminated_letters = check_guess(guess, answer, eliminated_letters)
+        key, result, eliminated_letters, must_use, locked = check_guess(
+            game_mode, guess, answer, eliminated_letters, must_use
+        )
         keys.append(key)
         results.append(result)
 
@@ -84,14 +132,14 @@ def main():
                 f"{num_result+1}: {guesses[num_result]} | {keys[num_result]} | {results[num_result]}"
             )
 
-        if key == "ooooo":
-            print("Success!")
+        if key == "11111":
+            print("\nSuccess!\n")
             break
         else:
             print(f"Eliminated letters: {eliminated_letters}")
 
-    if key != "ooooo":
-        print("Failure!")
+    if key != "11111":
+        print("\nFailure!\n")
 
 
 if __name__ == "__main__":
