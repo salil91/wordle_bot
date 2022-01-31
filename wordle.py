@@ -25,7 +25,7 @@ def get_word_list(word_list_file):
     # Read word list and return only 5-letter words
     with open(word_list_file, "r") as w:
         words = w.read().splitlines()
-        five_letter_words = [word for word in words if len(word) == 5]
+        five_letter_words = [word.lower() for word in words if len(word) == 5]
 
         return five_letter_words
 

@@ -18,11 +18,10 @@ from string import ascii_lowercase
 from wordle import check_guess, get_word_list, print_progress
 
 
-def get_letter_scores(words_file):
-    with open(words_file) as f:
-        letter_scores_raw = Counter(
-            letter for line in f for letter in line.lower() if letter in ascii_lowercase
-        )
+def get_letter_scores(word_list):
+    letter_scores_raw = Counter(
+        letter for word in word_list for letter in word if letter in ascii_lowercase
+    )
 
     least_common_letter = min(letter_scores_raw, key=letter_scores_raw.get)
     lowest_score = letter_scores_raw[least_common_letter]
@@ -37,6 +36,7 @@ def get_letter_scores(words_file):
         )
 
     letter_scores_norm = dict(map(normalize_score, letter_scores_raw.items()))
+    print(letter_scores_norm)
 
     return letter_scores_norm
 
@@ -55,7 +55,6 @@ def get_best_word(
     locked,
     eliminated_letters,
     guesses,
-    letter_scores,
     allow_repeat_letters=False,
 ):
     def meets_requirements(
@@ -96,12 +95,17 @@ def get_best_word(
         word_list = [word for word in word_list if not contains_repeat_letters(word)]
         print(f"After removing repeats: {len(word_list)}")
 
-    word_list_scored = dict()
-    for word in word_list:
-        word_list_scored[word] = get_word_score(word, letter_scores)
+    if len(word_list) == 1:
+        best_word = word_list[0]
+        print(f"Only remaining word: {best_word}")
+    else:
+        letter_scores = get_letter_scores(word_list)
+        word_list_scored = dict()
+        for word in word_list:
+            word_list_scored[word] = get_word_score(word, letter_scores)
 
-    best_word = max(word_list_scored, key=word_list_scored.get)
-    print(f"Best word: {best_word}, Score = {word_list_scored[best_word]}")
+        best_word = max(word_list_scored, key=word_list_scored.get)
+        print(f"Best word: {best_word}, Score = {word_list_scored[best_word]}")
 
     return best_word
 
@@ -122,7 +126,6 @@ def main(answer):
     answer = vars(args)["answer"]
     words_file = vars(args)["allowed_words"]
 
-    letter_scores = get_letter_scores(words_file)
     word_list = get_word_list(words_file)
 
     if len(answer) != 5:
@@ -154,7 +157,6 @@ def main(answer):
             locked,
             eliminated_letters,
             guesses,
-            letter_scores,
             allow_repeat_letters=allow_repeats,
         )
         guesses.append(best_word)
