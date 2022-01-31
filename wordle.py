@@ -85,7 +85,8 @@ def check_guess(hard_mode, guess, answer, absent_letters, must_use):
         else:
             key.append("-")
             revealed.append("-")
-            absent_letters.append(letter)
+            if letter not in must_use:
+                absent_letters.add(letter)
             if hard_mode:
                 locked.append(".")
 
@@ -94,6 +95,15 @@ def check_guess(hard_mode, guess, answer, absent_letters, must_use):
     locked_string = "".join(locked)
 
     return key_string, revealed_string, absent_letters, must_use, locked_string
+
+
+def print_progress(guesses, keys, results, eliminated_letters, success=False):
+    for num_guess, guess in enumerate(guesses):
+        print(
+            " | ".join([str(num_guess + 1), guess, keys[num_guess], results[num_guess]])
+        )
+    if not success:
+        print(f"Eliminated letters: {eliminated_letters}")
 
 
 def main():
@@ -134,37 +144,26 @@ def main():
         [],
         [],
         [],
-        [],
+        set(),
         set(),
         "",
     )
     for num_guess in range(1, 7):
         guess = get_guess(hard_mode, num_guess, five_letter_words, must_use, locked)
         guesses.append(guess)
+
         key, result, eliminated_letters, must_use, locked = check_guess(
             hard_mode, guess, answer, eliminated_letters, must_use
         )
         keys.append(key)
         results.append(result)
 
-        # Print output of each iteration up to this one
-        for num_result, result in enumerate(keys):
-            print(
-                " | ".join(
-                    [
-                        str(num_result + 1),
-                        guesses[num_result],
-                        keys[num_result],
-                        results[num_result],
-                    ],
-                )
-            )
-
         if key == "11111":
+            print_progress(guesses, keys, results, eliminated_letters, success=True)
             print("\nSuccess!")
             break
         else:
-            print(f"Eliminated letters: {eliminated_letters}")
+            print_progress(guesses, keys, results, eliminated_letters, success=False)
 
     if key != "11111":
         print("\nFailure!")
