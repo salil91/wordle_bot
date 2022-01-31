@@ -32,4 +32,4 @@ python wordle_bot.py [-h] [--allowed-words ALLOWED_WORDS] answer
 ````
 
 ## TODO
-Bot needs work on not guessing letters that have been discovered as "in word but wrong spot".
+Improve bot
