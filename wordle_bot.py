@@ -57,31 +57,25 @@ def get_best_word(
     guesses,
     allow_repeat_letters=False,
 ):
-    def meets_requirements(
-        word, required_letters, regex, discarded_letters, previous_guesses
-    ):
-        for letter in required_letters:
+    def meets_requirements(word):
+        for letter in must_use:
             if letter not in word:
                 return False
 
-        if not re.match(regex, word):
+        if not re.match(locked, word):
             return False
 
-        for letter in discarded_letters:
+        for letter in eliminated_letters:
             if letter in word:
                 return False
 
-        if word in previous_guesses:
+        if word in guesses:
             return False
 
         return True
 
     if eliminated_letters:
-        word_list = [
-            word
-            for word in word_list
-            if meets_requirements(word, must_use, locked, eliminated_letters, guesses)
-        ]
+        word_list = [word for word in word_list if meets_requirements(word)]
     print(f"Number of possibilities: {len(word_list)}")
 
     def contains_repeat_letters(word):
@@ -105,7 +99,7 @@ def get_best_word(
             word_list_scored[word] = get_word_score(word, letter_scores)
 
         best_word = max(word_list_scored, key=word_list_scored.get)
-        print(f"Best word: {best_word}, Score = {word_list_scored[best_word]}")
+        print(f"Best word: {best_word}  | Score = {word_list_scored[best_word]}")
 
     return best_word
 
@@ -161,24 +155,22 @@ def main():
         )
         guesses.append(best_word)
 
-        key, result, eliminated_letters, must_use, locked = check_guess(
+        result, key, eliminated_letters, must_use, locked = check_guess(
             hard_mode=True,
             guess=best_word,
             answer=answer,
             absent_letters=eliminated_letters,
             must_use=must_use,
         )
-        keys.append(key)
+        key_string = "".join(key.values())
+        keys.append(key_string)
         results.append(result)
 
-        if key == "11111":
-            print_progress(guesses, keys, results, eliminated_letters, success=True)
-            print("\nSuccess!")
+        success = print_progress(guesses, keys, results, eliminated_letters, key_string)
+        if success:
             break
-        else:
-            print_progress(guesses, keys, results, eliminated_letters, success=False)
 
-    if key != "11111":
+    if not success:
         print("\nFailure!")
 
 

@@ -67,44 +67,53 @@ def get_guess(hard_mode, num_guess, five_letter_words, must_use, locked):
 
 
 def check_guess(hard_mode, guess, answer, absent_letters, must_use):
-    key, revealed, locked = [], [], []
+    key, result, locked = dict(), [], []
     remaining = list(answer)
     for spot, letter in enumerate(guess):
         if letter == answer[spot]:
-            key.append("1")
-            revealed.append(letter.upper())
+            key[spot] = "1"
+            result.append(letter.upper())
             remaining[spot] = ""
             if hard_mode:
                 must_use.add(letter)
                 locked.append(letter)
         elif letter in remaining:
-            key.append("0")
-            revealed.append(letter)
+            key[spot] = "0"
+            result.append(letter)
             if hard_mode:
                 must_use.add(letter)
                 locked.append(".")
         else:
-            key.append("-")
-            revealed.append("-")
+            key[spot] = "-"
+            result.append("-")
             if letter not in must_use:
                 absent_letters.add(letter)
             if hard_mode:
                 locked.append(".")
 
-    key_string = "".join(key)
-    revealed_string = "".join(revealed)
+    result_string = "".join(result)
     locked_string = "".join(locked)
 
-    return key_string, revealed_string, absent_letters, must_use, locked_string
+    return key, result_string, absent_letters, must_use, locked_string
 
 
-def print_progress(guesses, keys, results, eliminated_letters, success=False):
+def print_progress(guesses, keys, results, eliminated_letters, key_string):
+    if key_string == "11111":
+        success = True
+    else:
+        success = False
+
     for num_guess, guess in enumerate(guesses):
         print(
             " | ".join([str(num_guess + 1), guess, keys[num_guess], results[num_guess]])
         )
-    if not success:
+
+    if success:
+        print("\nSuccess!")
+    else:
         print(f"Eliminated letters: {eliminated_letters}")
+
+    return success
 
 
 def main():
@@ -163,17 +172,15 @@ def main():
         key, result, eliminated_letters, must_use, locked = check_guess(
             hard_mode, guess, answer, eliminated_letters, must_use
         )
-        keys.append(key)
+        key_string = "".join(key.values())
+        keys.append(key_string)
         results.append(result)
 
-        if key == "11111":
-            print_progress(guesses, keys, results, eliminated_letters, success=True)
-            print("\nSuccess!")
+        success = print_progress(guesses, keys, results, eliminated_letters, key_string)
+        if success:
             break
-        else:
-            print_progress(guesses, keys, results, eliminated_letters, success=False)
 
-    if key != "11111":
+    if not success:
         print("\nFailure!")
 
 
