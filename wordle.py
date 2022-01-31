@@ -5,7 +5,7 @@
 # options:
 #   -h, --help            show this help message and exit
 #   --hard                Enable hard mode
-#   --answer ANSWER, -a ANSWER
+#   -a ANSWER, --answer ANSWER
 #                         Provide the answer
 #   --show-answer         Show the answer (for testing purposes)
 
@@ -21,9 +21,9 @@ import random
 import re
 
 
-def get_word_list():
+def get_word_list(word_list_file):
     # Read word list and return only 5-letter words
-    with open("words_alpha.txt", "r") as w:
+    with open(word_list_file, "r") as w:
         words = w.read().splitlines()
         five_letter_words = [word for word in words if len(word) == 5]
 
@@ -99,7 +99,7 @@ def check_guess(hard_mode, guess, answer, absent_letters, must_use):
 def main():
     arg_parser = argparse.ArgumentParser(description="Play Wordle in the command line")
     arg_parser.add_argument("--hard", action="store_true", help="Enable hard mode")
-    arg_parser.add_argument("--answer", "-a", action="store", help="Provide the answer")
+    arg_parser.add_argument("-a", "--answer", action="store", help="Provide the answer")
     arg_parser.add_argument(
         "--show-answer",
         action="store_true",
@@ -115,7 +115,7 @@ def main():
     else:
         print(f"Game mode: EASY")
 
-    five_letter_words = get_word_list()
+    five_letter_words = get_word_list("words_alpha.txt")
 
     if answer:
         if len(answer) != 5:
@@ -147,9 +147,17 @@ def main():
         keys.append(key)
         results.append(result)
 
+        # Print output of each iteration up to this one
         for num_result, result in enumerate(keys):
             print(
-                f"{num_result+1}: {guesses[num_result]} | {keys[num_result]} | {results[num_result]}"
+                " | ".join(
+                    [
+                        str(num_result + 1),
+                        guesses[num_result],
+                        keys[num_result],
+                        results[num_result],
+                    ],
+                )
             )
 
         if key == "11111":
