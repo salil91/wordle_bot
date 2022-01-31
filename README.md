@@ -12,6 +12,8 @@ python wordle.py [-h] [--hard] [--answer ANSWER] [--show-answer]
 #   -a ANSWER, --answer ANSWER
 #                         Provide the answer
 #   --show-answer         Show the answer (for testing purposes)
+#   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
+#                         Path to text file containing list of allowed words (one word per line)
 ````
 
 ### Simple Bot:
@@ -24,7 +26,7 @@ python wordle_bot.py [-h] [--allowed-words ALLOWED_WORDS] answer
 #
 # options:
 #   -h, --help            show this help message and exit
-#   -a ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
+#   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
 #                         Path to text file containing list of allowed words (one word per line)
 ````
 

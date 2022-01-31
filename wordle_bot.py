@@ -7,7 +7,7 @@
 #
 # options:
 #   -h, --help            show this help message and exit
-#   -a ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
+#   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
 #                         Path to text file containing list of allowed words (one word per line)
 
 import argparse
@@ -116,11 +116,11 @@ def main(answer):
     )
     arg_parser.add_argument("answer", action="store", help="Provide the answer")
     arg_parser.add_argument(
-        "-a",
+        "-w",
         "--allowed-words",
         action="store",
         help="Path to text file containing list of allowed words (one word per line)",
-        default="words_alpha.txt",
+        default="words_wordle.txt",
     )
     args = arg_parser.parse_args()
     answer = vars(args)["answer"]

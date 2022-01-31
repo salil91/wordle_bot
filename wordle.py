@@ -8,7 +8,8 @@
 #   -a ANSWER, --answer ANSWER
 #                         Provide the answer
 #   --show-answer         Show the answer (for testing purposes)
-
+#   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
+#                         Path to text file containing list of allowed words (one word per line)
 
 # Output key:
 # Turn : guess | symbolic result | alphabet result
@@ -21,7 +22,7 @@ import random
 import re
 
 
-def get_word_list(word_list_file):
+def get_word_list(word_list_file="words_wordle.txt"):
     # Read word list and return only 5-letter words
     with open(word_list_file, "r") as w:
         words = w.read().splitlines()
@@ -115,6 +116,13 @@ def main():
         action="store_true",
         help="Show the answer (for testing purposes)",
     )
+    arg_parser.add_argument(
+        "-w",
+        "--allowed-words",
+        action="store",
+        help="Path to text file containing list of allowed words (one word per line)",
+        default="words_wordle.txt",
+    )
     args = arg_parser.parse_args()
     hard_mode = vars(args)["hard"]
     answer = vars(args)["answer"]
@@ -125,7 +133,7 @@ def main():
     else:
         print(f"Game mode: EASY")
 
-    five_letter_words = get_word_list("words_alpha.txt")
+    five_letter_words = get_word_list("words_wordle.txt")
 
     if answer:
         if len(answer) != 5:
