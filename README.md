@@ -11,9 +11,9 @@ python wordle.py [-h] [--hard] [--answer ANSWER] [--show-answer]
 #   --hard                Enable hard mode
 #   -a ANSWER, --answer ANSWER
 #                         Provide the answer
-#   --show-answer         Show the answer (for testing purposes)
 #   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
 #                         Path to text file containing list of allowed words (one word per line)
+#   -v, --show-answer     Show the answer (for testing purposes)
 ````
 
 ### Simple Bot:

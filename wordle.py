@@ -121,16 +121,17 @@ def main():
     arg_parser.add_argument("--hard", action="store_true", help="Enable hard mode")
     arg_parser.add_argument("-a", "--answer", action="store", help="Provide the answer")
     arg_parser.add_argument(
-        "--show-answer",
-        action="store_true",
-        help="Show the answer (for testing purposes)",
-    )
-    arg_parser.add_argument(
         "-w",
         "--allowed-words",
         action="store",
         help="Path to text file containing list of allowed words (one word per line)",
         default="words_wordle.txt",
+    )
+    arg_parser.add_argument(
+        "-v",
+        "--show-answer",
+        action="store_true",
+        help="Show the answer (for testing purposes)",
     )
     args = arg_parser.parse_args()
     hard_mode = vars(args)["hard"]
