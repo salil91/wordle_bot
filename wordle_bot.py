@@ -9,6 +9,7 @@
 #   -h, --help            show this help message and exit
 #   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
 #                         Path to text file containing list of allowed words (one word per line)
+#   -v, --verbose         Display additional outputs
 
 import argparse
 import re
@@ -18,7 +19,7 @@ from string import ascii_lowercase
 from wordle import check_guess, get_word_list, print_progress
 
 
-def get_letter_scores(word_list):
+def get_letter_scores(word_list, verbose=True):
     letter_scores_raw = Counter(
         letter for word in word_list for letter in word if letter in ascii_lowercase
     )
@@ -36,7 +37,8 @@ def get_letter_scores(word_list):
         )
 
     letter_scores_norm = dict(map(normalize_score, letter_scores_raw.items()))
-    print(letter_scores_norm)
+    if verbose:
+        print(f"Letter scores: {letter_scores_norm}")
 
     return letter_scores_norm
 
@@ -53,11 +55,17 @@ def get_best_word(
     word_list,
     must_use,
     locked,
+    spot_reqs,
     eliminated_letters,
     guesses,
     allow_repeat_letters=False,
+    verbose=True,
 ):
     def meets_requirements(word):
+        for spot, letter in enumerate(word):
+            if letter in spot_reqs[spot + 1]:
+                return False
+
         for letter in must_use:
             if letter not in word:
                 return False
@@ -76,7 +84,8 @@ def get_best_word(
 
     if eliminated_letters:
         word_list = [word for word in word_list if meets_requirements(word)]
-    print(f"Number of possibilities: {len(word_list)}")
+    if verbose:
+        print(f"Number of possibilities: {len(word_list)}")
 
     def contains_repeat_letters(word):
         for letter in word:
@@ -87,21 +96,34 @@ def get_best_word(
 
     if not allow_repeat_letters:
         word_list = [word for word in word_list if not contains_repeat_letters(word)]
-        print(f"After removing repeats: {len(word_list)}")
+        if verbose:
+            print(f"After removing repeats: {len(word_list)}")
 
     if len(word_list) == 1:
         best_word = word_list[0]
-        print(f"Only remaining word: {best_word}")
+        if verbose:
+            print(f"Only remaining word: {best_word}")
     else:
-        letter_scores = get_letter_scores(word_list)
+        letter_scores = get_letter_scores(word_list, verbose)
         word_list_scored = dict()
         for word in word_list:
             word_list_scored[word] = get_word_score(word, letter_scores)
 
         best_word = max(word_list_scored, key=word_list_scored.get)
-        print(f"Best word: {best_word}  | Score = {word_list_scored[best_word]}")
+        if verbose:
+            print(f"Best word: {best_word}  | Score = {word_list_scored[best_word]}")
 
     return best_word
+
+
+def get_spot_requirements(spot_reqs, guess, answer_key):
+    for spot, not_in_spot in spot_reqs.items():
+        letter = guess[spot - 1]
+        code = answer_key[spot]
+        if code == "-" or code == "0":
+            not_in_spot.add(letter)
+
+    return spot_reqs
 
 
 def main():
@@ -116,9 +138,13 @@ def main():
         help="Path to text file containing list of allowed words (one word per line)",
         default="words_wordle.txt",
     )
+    arg_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Display additional outputs"
+    )
     args = arg_parser.parse_args()
     answer = vars(args)["answer"]
     words_file = vars(args)["allowed_words"]
+    verbose = vars(args)["verbose"]
 
     word_list = get_word_list(words_file)
 
@@ -129,14 +155,17 @@ def main():
     else:
         print(f"Answer: {answer}")
 
-    guesses, keys, results, eliminated_letters, must_use, locked = (
+    guesses, answer_keys, results, eliminated_letters, must_use, locked, spot_reqs = (
         [],
         [],
         [],
         set(),
         set(),
         "",
+        dict(),
     )
+    for spot in range(1, 6):
+        spot_reqs[spot] = set()
 
     for num_guess in range(1, 7):
         print(f"\nGuess {num_guess}")
@@ -145,30 +174,38 @@ def main():
             allow_repeats = False
         else:
             allow_repeats = True
+
         best_word = get_best_word(
             word_list,
             must_use,
             locked,
+            spot_reqs,
             eliminated_letters,
             guesses,
             allow_repeat_letters=allow_repeats,
+            verbose=verbose,
         )
         guesses.append(best_word)
 
-        result, key, eliminated_letters, must_use, locked = check_guess(
+        answer_key, result, eliminated_letters, must_use, locked = check_guess(
             hard_mode=True,
             guess=best_word,
             answer=answer,
             absent_letters=eliminated_letters,
             must_use=must_use,
         )
-        key_string = "".join(key.values())
-        keys.append(key_string)
+        answer_keys.append(answer_key)
         results.append(result)
 
-        success = print_progress(guesses, keys, results, eliminated_letters, key_string)
+        spot_reqs = get_spot_requirements(spot_reqs, best_word, answer_key)
+
+        success = print_progress(guesses, answer_keys, results, eliminated_letters)
+
         if success:
             break
+        else:
+            if verbose:
+                print(f"Spot Requirements: {spot_reqs}")
 
     if not success:
         print("\nFailure!")
