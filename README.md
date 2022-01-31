@@ -32,5 +32,3 @@ python wordle_bot.py [-h] [--allowed-words ALLOWED_WORDS] answer
 
 ## TODO
 Bot needs work on not guessing letters that have been discovered as "in word but wrong spot".
-
-Also, the current list of words contains a number of words not allowed by Wordle. Need to scrape the Wordle website to get the list of allowed words.

@@ -110,7 +110,7 @@ def get_best_word(
     return best_word
 
 
-def main(answer):
+def main():
     arg_parser = argparse.ArgumentParser(
         description="Bot to solve Wordle. The answer must be given, and the bot solves in hard mode."
     )
@@ -183,4 +183,4 @@ def main(answer):
 
 
 if __name__ == "__main__":
-    main("tests")
+    main()
