@@ -67,37 +67,44 @@ def get_guess(hard_mode, num_guess, five_letter_words, must_use, locked):
 
 
 def check_guess(hard_mode, guess, answer, absent_letters, must_use):
-    answer_key, result, locked = dict(), [], []
+    answer_key = {1: None, 2: None, 3: None, 4: None, 5: None}
+    result, locked = ["."] * 5, ["."] * 5
     remaining = list(answer)
     for spot, letter in enumerate(guess):
         if letter == answer[spot]:
             answer_key[spot + 1] = "1"
-            result.append(letter.upper())
+            result[spot] = letter.upper()
             remaining[spot] = ""
             if hard_mode:
                 must_use.add(letter)
-                locked.append(letter)
-        elif letter in remaining:
+                locked[spot] = letter
+    for spot, letter in enumerate(guess):
+        if answer_key[spot + 1] == "1":
+            continue
+        if letter in remaining:
             answer_key[spot + 1] = "0"
-            result.append(letter)
+            result[spot] = letter.lower()
             if hard_mode:
                 must_use.add(letter)
-                locked.append(".")
-        else:
+    for spot, letter in enumerate(guess):
+        if answer_key[spot + 1] == "1":
+            continue
+        if letter not in remaining:
             answer_key[spot + 1] = "-"
-            result.append("-")
+            result[spot] = "-"
             if letter not in must_use:
                 absent_letters.add(letter)
-            if hard_mode:
-                locked.append(".")
 
     result_string = "".join(result)
     locked_string = "".join(locked)
+    print(answer_key)
 
     return answer_key, result_string, absent_letters, must_use, locked_string
 
 
-def print_progress(guesses, answer_keys, results, eliminated_letters):
+def get_progress(
+    guesses, answer_keys, results, eliminated_letters, must_use, locked, hard_mode
+):
     for num_guess, guess in enumerate(guesses):
         answer_key_string = "".join(answer_keys[num_guess].values())
         print(
@@ -111,6 +118,9 @@ def print_progress(guesses, answer_keys, results, eliminated_letters):
         print("\nSuccess!")
     else:
         success = False
+        if hard_mode:
+            print(f"RegEx: {locked}")
+            print(f"Must Use: {must_use}")
         print(f"Eliminated letters: {eliminated_letters}")
 
     return success
@@ -135,7 +145,7 @@ def main():
     )
     args = arg_parser.parse_args()
     hard_mode = vars(args)["hard"]
-    answer = vars(args)["answer"]
+    answer = vars(args)["answer"].lower()
     show_answer = vars(args)["show_answer"]
 
     if hard_mode:
@@ -152,11 +162,11 @@ def main():
             raise Exception("Answer not in word list.")
         else:
             if show_answer:
-                print(f"Given answer: {answer}")
+                print(f"Given answer: {answer.upper()}")
     else:
         answer = random.choice(five_letter_words)
         if show_answer:
-            print(f"Random answer: {answer}")
+            print(f"Random answer: {answer.upper()}")
 
     guesses, answer_keys, results, eliminated_letters, must_use, locked = (
         [],
@@ -176,7 +186,15 @@ def main():
         answer_keys.append(key)
         results.append(result)
 
-        success = print_progress(guesses, answer_keys, results, eliminated_letters)
+        success = get_progress(
+            guesses,
+            answer_keys,
+            results,
+            eliminated_letters,
+            must_use,
+            locked,
+            hard_mode,
+        )
         if success:
             break
 

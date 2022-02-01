@@ -2,11 +2,10 @@
 
 # Usage: wordle_bot.py [-h] [--allowed-words ALLOWED_WORDS] answer
 #
-# positional arguments:
-#   answer                Provide the answer
-#
 # options:
 #   -h, --help            show this help message and exit
+#   -a ANSWER, --answer ANSWER
+#                         Provide the answer
 #   -w ALLOWED_WORDS, --allowed-words ALLOWED_WORDS
 #                         Path to text file containing list of allowed words (one word per line)
 #   -v, --verbose         Display additional outputs
@@ -16,7 +15,7 @@ import re
 from collections import Counter
 from string import ascii_lowercase
 
-from wordle import check_guess, get_word_list, print_progress
+from wordle import check_guess, get_progress, get_word_list
 
 
 def get_letter_scores(word_list, verbose=True):
@@ -116,6 +115,39 @@ def get_best_word(
     return best_word
 
 
+def get_answer_key(guess, absent_letters, must_use):
+    while True:
+        answer_key_string = input("Submit Answer Key:")
+        if re.match(r"^[-01]{5}$", answer_key_string):
+            break
+        else:
+            print("INVALID ANSWER KEY. Try again.")
+
+    answer_key, result, locked = dict(), [], []
+    for spot, char in enumerate(answer_key_string):
+        answer_key[spot + 1] = char
+
+    for spot, letter in enumerate(guess):
+        if answer_key[spot + 1] == "1":
+            result.append(letter.upper())
+            must_use.add(letter)
+            locked.append(letter)
+        elif answer_key[spot + 1] == "0":
+            result.append(letter.lower())
+            must_use.add(letter)
+            locked.append(".")
+        else:
+            result.append("-")
+            locked.append(".")
+            if letter not in must_use:
+                absent_letters.add(letter)
+
+    result_string = "".join(result)
+    locked_string = "".join(locked)
+
+    return answer_key, result_string, absent_letters, must_use, locked_string
+
+
 def get_spot_requirements(spot_reqs, guess, answer_key):
     for spot, not_in_spot in spot_reqs.items():
         letter = guess[spot - 1]
@@ -130,7 +162,7 @@ def main():
     arg_parser = argparse.ArgumentParser(
         description="Bot to solve Wordle. The answer must be given, and the bot solves in hard mode."
     )
-    arg_parser.add_argument("answer", action="store", help="Provide the answer")
+    arg_parser.add_argument("-a", "--answer", action="store", help="Provide the answer")
     arg_parser.add_argument(
         "-w",
         "--allowed-words",
@@ -148,12 +180,21 @@ def main():
 
     word_list = get_word_list(words_file)
 
-    if len(answer) != 5:
-        raise Exception("Answer must be a 5 letter word.")
-    if answer not in word_list:
-        raise Exception("Answer not in word list.")
+    if answer:
+        answer = answer.lower()
+        if len(answer) != 5:
+            raise Exception("Answer must be a 5 letter word.")
+        if answer not in word_list:
+            raise Exception("Answer not in word list.")
+        else:
+            print(f"Answer: {answer.upper()}")
     else:
-        print(f"Answer: {answer}")
+        print("No answer provided. Play-along mode enabled.")
+        print("User must provide answer key as a single string after each guess.")
+        print('"-" if the letter is not in the word in any spot (gray)')
+        print('"0" if the letter is in the word but in the wrong spot (yellow/blue)')
+        print('"1" if the letter is in the word and in the correct spot (green/orange)')
+        print('eg. "-0-10"')
 
     guesses, answer_keys, results, eliminated_letters, must_use, locked, spot_reqs = (
         [],
@@ -187,19 +228,34 @@ def main():
         )
         guesses.append(best_word)
 
-        answer_key, result, eliminated_letters, must_use, locked = check_guess(
-            hard_mode=True,
-            guess=best_word,
-            answer=answer,
-            absent_letters=eliminated_letters,
-            must_use=must_use,
-        )
+        if answer:
+            answer_key, result, eliminated_letters, must_use, locked = check_guess(
+                hard_mode=True,
+                guess=best_word,
+                answer=answer,
+                absent_letters=eliminated_letters,
+                must_use=must_use,
+            )
+        else:
+            print(f"Optimal Guess: {best_word.upper()}")
+            answer_key, result, eliminated_letters, must_use, locked = get_answer_key(
+                guess=best_word, absent_letters=eliminated_letters, must_use=must_use
+            )
+
         answer_keys.append(answer_key)
         results.append(result)
 
         spot_reqs = get_spot_requirements(spot_reqs, best_word, answer_key)
 
-        success = print_progress(guesses, answer_keys, results, eliminated_letters)
+        success = get_progress(
+            guesses,
+            answer_keys,
+            results,
+            eliminated_letters,
+            must_use,
+            locked,
+            hard_mode=True,
+        )
 
         if success:
             break
